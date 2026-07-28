@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { CareerGrid } from "@/components/careers/career-grid";
 import { TagList } from "@/components/careers/tag-list";
 import { SalaryRangeDisplay } from "@/components/careers/salary-range";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { CareerDetail } from "@/lib/types/career";
+import type { CareerDetail, CareerListItem } from "@/lib/types/career";
 
 type CareerDetailViewProps = {
   career: CareerDetail;
+  similarCareers?: CareerListItem[];
 };
 
 function formatLabel(value: string): string {
@@ -24,9 +24,10 @@ function formatLabel(value: string): string {
     .join(" ");
 }
 
-export function CareerDetailView({ career }: CareerDetailViewProps) {
-  const relatedCareers = career.relatedFrom.map((r) => r.toCareer);
-
+export function CareerDetailView({
+  career,
+  similarCareers = [],
+}: CareerDetailViewProps) {
   return (
     <article className="space-y-8">
       <header className="space-y-4">
@@ -129,20 +130,16 @@ export function CareerDetailView({ career }: CareerDetailViewProps) {
         )}
       </section>
 
-      {relatedCareers.length > 0 && (
+      {similarCareers.length > 0 && (
         <section>
-          <h2 className="mb-4 text-lg font-semibold">Related careers</h2>
-          <div className="flex flex-wrap gap-2">
-            {relatedCareers.map((related) => (
-              <Link
-                key={related.slug}
-                href={`/careers/${related.slug}`}
-                className="rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted"
-              >
-                {related.title}
-              </Link>
-            ))}
-          </div>
+          <h2 className="mb-2 text-lg font-semibold">Similar careers</h2>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Other paths that share skills, interests, and industries with {career.title}.
+          </p>
+          <CareerGrid
+            careers={similarCareers}
+            emptyMessage="No similar careers found."
+          />
         </section>
       )}
     </article>

@@ -1,4 +1,4 @@
-import { CareerStatus, Prisma } from "@/generated/prisma/client";
+import { CareerRelationType, CareerStatus, Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import type { CareerDetail, CareerListItem } from "@/lib/types/career";
 
@@ -129,5 +129,89 @@ export const careerRepository = {
     return careers.sort(
       (a, b) => (order.get(a.slug) ?? 0) - (order.get(b.slug) ?? 0),
     );
+  },
+
+  async findSimilarBySlug(slug: string, limit = 6): Promise<CareerListItem[]> {
+    const source = await db.career.findFirst({
+      where: { slug, status: CareerStatus.PUBLISHED },
+      select: {
+        id: true,
+        interests: { select: { interestId: true } },
+        activities: { select: { activityId: true } },
+        skills: { select: { skillId: true } },
+        industries: { select: { industryId: true } },
+        relatedFrom: {
+          where: { relationType: CareerRelationType.SIMILAR },
+          select: { toCareer: { select: { slug: true } } },
+        },
+        relatedTo: {
+          where: { relationType: CareerRelationType.SIMILAR },
+          select: { fromCareer: { select: { slug: true } } },
+        },
+      },
+    });
+
+    if (!source) return [];
+
+    const explicitSlugs = [
+      ...source.relatedFrom.map((relation) => relation.toCareer.slug),
+      ...source.relatedTo.map((relation) => relation.fromCareer.slug),
+    ];
+
+    const sourceInterestIds = new Set(source.interests.map((item) => item.interestId));
+    const sourceActivityIds = new Set(source.activities.map((item) => item.activityId));
+    const sourceSkillIds = new Set(source.skills.map((item) => item.skillId));
+    const sourceIndustryIds = new Set(source.industries.map((item) => item.industryId));
+
+    const candidates = await db.career.findMany({
+      where: { status: CareerStatus.PUBLISHED, id: { not: source.id } },
+      select: {
+        slug: true,
+        interests: { select: { interestId: true } },
+        activities: { select: { activityId: true } },
+        skills: { select: { skillId: true } },
+        industries: { select: { industryId: true } },
+      },
+    });
+
+    const scored = candidates
+      .map((candidate) => {
+        let score = 0;
+
+        for (const item of candidate.interests) {
+          if (sourceInterestIds.has(item.interestId)) score += 3;
+        }
+        for (const item of candidate.activities) {
+          if (sourceActivityIds.has(item.activityId)) score += 2;
+        }
+        for (const item of candidate.skills) {
+          if (sourceSkillIds.has(item.skillId)) score += 2;
+        }
+        for (const item of candidate.industries) {
+          if (sourceIndustryIds.has(item.industryId)) score += 1;
+        }
+
+        return { slug: candidate.slug, score };
+      })
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    const rankedSlugs: string[] = [];
+    const seen = new Set<string>();
+
+    for (const explicitSlug of explicitSlugs) {
+      if (seen.has(explicitSlug)) continue;
+      seen.add(explicitSlug);
+      rankedSlugs.push(explicitSlug);
+    }
+
+    for (const item of scored) {
+      if (seen.has(item.slug)) continue;
+      seen.add(item.slug);
+      rankedSlugs.push(item.slug);
+      if (rankedSlugs.length >= limit) break;
+    }
+
+    return this.findBySlugs(rankedSlugs.slice(0, limit));
   },
 };

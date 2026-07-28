@@ -14,7 +14,10 @@ type CareerPageProps = {
 
 export default async function CareerPage({ params }: CareerPageProps) {
   const { slug } = await params;
-  const career = await careerRepository.findBySlug(slug);
+  const [career, similarCareers] = await Promise.all([
+    careerRepository.findBySlug(slug),
+    careerRepository.findSimilarBySlug(slug, 6),
+  ]);
 
   if (!career) {
     notFound();
@@ -23,14 +26,14 @@ export default async function CareerPage({ params }: CareerPageProps) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-3xl flex-1 px-4 py-12 sm:px-6">
+      <main className="mx-auto max-w-5xl flex-1 px-4 py-12 sm:px-6">
         <Link
           href="/careers"
           className="mb-8 inline-block text-sm text-muted-foreground hover:text-foreground"
         >
           ← Back to careers
         </Link>
-        <CareerDetailView career={career} />
+        <CareerDetailView career={career} similarCareers={similarCareers} />
       </main>
       <SiteFooter />
     </>
