@@ -60,8 +60,8 @@ export function CareerDetailView({
       </header>
 
       {career.summary && (
-        <section className="prose prose-neutral dark:prose-invert max-w-none">
-          <p className="text-base leading-relaxed text-foreground/90">{career.summary}</p>
+        <section className="prose prose-neutral max-w-none">
+          <p className="text-base leading-relaxed text-foreground">{career.summary}</p>
         </section>
       )}
 

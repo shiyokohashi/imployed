@@ -39,7 +39,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="border-t border-border/60 bg-muted/30">
+        <section className="border-t border-border bg-muted/40">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
             <div className="mb-8 flex items-end justify-between gap-4">
               <div>

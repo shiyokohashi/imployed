@@ -1,28 +1,35 @@
 import { SkillPickerGroup } from "@/generated/prisma/client";
+import {
+  INTEREST_SLUG_ORDER,
+  orderTaxonomyBySlugs,
+  SKILL_SLUG_ORDER,
+  WORK_STYLE_SLUG_ORDER,
+} from "@/lib/constants/personalization-taxonomy";
 import { db } from "@/lib/db";
-import type { DiscoveryTaxonomy, TaxonomyItem } from "@/lib/types/career";
+import type { DiscoveryTaxonomy } from "@/lib/types/discovery";
+import type { TaxonomyItem } from "@/lib/types/career";
 
 export const taxonomyRepository = {
-  async getSkillsByPickerGroup(group: SkillPickerGroup): Promise<TaxonomyItem[]> {
-    return db.skill.findMany({
-      where: { skillPickerGroup: group },
-      select: { slug: true, name: true, description: true },
-      orderBy: { name: "asc" },
-    });
-  },
-
   async getInterests(): Promise<TaxonomyItem[]> {
-    return db.interest.findMany({
+    const items = await db.interest.findMany({
       select: { slug: true, name: true, description: true },
-      orderBy: { name: "asc" },
     });
+    return orderTaxonomyBySlugs(items, INTEREST_SLUG_ORDER);
   },
 
-  async getActivities(): Promise<TaxonomyItem[]> {
-    return db.activity.findMany({
+  async getSkills(): Promise<TaxonomyItem[]> {
+    const items = await db.skill.findMany({
+      where: { skillPickerGroup: SkillPickerGroup.HAVE },
       select: { slug: true, name: true, description: true },
-      orderBy: { name: "asc" },
     });
+    return orderTaxonomyBySlugs(items, SKILL_SLUG_ORDER);
+  },
+
+  async getWorkStyles(): Promise<TaxonomyItem[]> {
+    const items = await db.workStyle.findMany({
+      select: { slug: true, name: true, description: true },
+    });
+    return orderTaxonomyBySlugs(items, WORK_STYLE_SLUG_ORDER);
   },
 
   async getIndustries(): Promise<TaxonomyItem[]> {
@@ -33,13 +40,12 @@ export const taxonomyRepository = {
   },
 
   async getDiscoveryTaxonomy(): Promise<DiscoveryTaxonomy> {
-    const [interests, skillsHave, skillsLearn, activities] = await Promise.all([
+    const [interests, skills, workStyles] = await Promise.all([
       this.getInterests(),
-      this.getSkillsByPickerGroup(SkillPickerGroup.HAVE),
-      this.getSkillsByPickerGroup(SkillPickerGroup.LEARN),
-      this.getActivities(),
+      this.getSkills(),
+      this.getWorkStyles(),
     ]);
 
-    return { interests, skillsHave, skillsLearn, activities };
+    return { interests, skills, workStyles };
   },
 };

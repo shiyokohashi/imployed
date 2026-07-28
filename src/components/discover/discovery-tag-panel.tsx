@@ -21,7 +21,7 @@ export function DiscoveryTagPanel({ taxonomy, active }: DiscoveryTagPanelProps) 
 
   const sections = DISCOVERY_TAG_SECTIONS.map((section) => ({
     ...section,
-    items: taxonomy[section.key === "skillsHave" ? "skillsHave" : section.key === "skillsLearn" ? "skillsLearn" : section.key],
+    items: taxonomy[section.key],
   }));
 
   function handleToggle(key: keyof DiscoveryFilters, slug: string, selected: string[]) {
@@ -31,11 +31,11 @@ export function DiscoveryTagPanel({ taxonomy, active }: DiscoveryTagPanelProps) 
   }
 
   return (
-    <div className="space-y-8 rounded-xl border border-border/60 bg-muted/20 p-6">
+    <div className="space-y-8 rounded-xl border border-border bg-card p-6 shadow-xs">
       <div className="space-y-1">
         <h2 className="text-sm font-medium">Personalize (optional)</h2>
         <p className="text-sm text-muted-foreground">
-          Add tags to get recommendations — or skip and browse freely below.
+          Add tags to get recommendations — or browse careers on the right.
         </p>
       </div>
 

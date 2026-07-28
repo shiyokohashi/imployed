@@ -1,5 +1,6 @@
 import { CareerStatus, GrowthOutlook } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
+import { MIN_CAREERS_PER_PAGE } from "@/lib/constants/discovery";
 import type { DiscoveryFilters, DiscoveryResponse, DiscoveryResult } from "@/lib/types/discovery";
 
 type SignalMatch = { slug: string; label: string; kind: string };
@@ -15,15 +16,14 @@ export const discoveryService = {
       include: {
         skills: { include: { skill: true }, orderBy: { importance: "desc" } },
         interests: { include: { interest: true } },
-        activities: { include: { activity: true } },
+        workStyles: { include: { workStyle: true } },
         industries: { include: { industry: true }, orderBy: { relevance: "desc" } },
         highlights: { orderBy: { sortOrder: "asc" } },
       },
     });
 
     const signals = await resolveSignalLabels(filters);
-    const haveSet = new Set(filters.skillsHave ?? []);
-    const learnSet = new Set(filters.skillsLearn ?? []);
+    const skillsSet = new Set(filters.skills ?? []);
 
     const results: DiscoveryResult[] = careers.map((career) => {
       let score = 0;
@@ -40,15 +40,15 @@ export const discoveryService = {
           }
         }
 
-        if (signal.kind === "activity") {
-          const match = career.activities.find((a) => a.activity.slug === signal.slug);
+        if (signal.kind === "workStyle") {
+          const match = career.workStyles.find((w) => w.workStyle.slug === signal.slug);
           if (match) {
-            score += match.relevance * 4;
-            reasons.push(`Involves ${signal.label.toLowerCase()}`);
+            score += match.fitScore * 4;
+            reasons.push(`Fits your ${signal.label.toLowerCase()} work style`);
           }
         }
 
-        if (signal.kind === "skillHave") {
+        if (signal.kind === "skill") {
           const match = career.skills.find((s) => s.skill.slug === signal.slug);
           if (match) {
             score += match.importance * 3;
@@ -56,28 +56,17 @@ export const discoveryService = {
             reasons.push(`Builds on your ${signal.label.toLowerCase()} skills`);
           }
         }
-
-        if (signal.kind === "skillLearn") {
-          const match = career.skills.find((s) => s.skill.slug === signal.slug);
-          if (match) {
-            score += match.importance * 2;
-            if (!haveSet.has(signal.slug)) {
-              skillsToBuild.push(match.skill.name);
-              reasons.push(`Room to explore ${signal.label.toLowerCase()}`);
-            }
-          }
-        }
       }
 
       for (const careerSkill of career.skills) {
         if (
-          haveSet.has(careerSkill.skill.slug) &&
+          skillsSet.has(careerSkill.skill.slug) &&
           !skillsYouHave.includes(careerSkill.skill.name)
         ) {
           skillsYouHave.push(careerSkill.skill.name);
         }
         if (
-          !haveSet.has(careerSkill.skill.slug) &&
+          !skillsSet.has(careerSkill.skill.slug) &&
           careerSkill.importance >= 4 &&
           !skillsToBuild.includes(careerSkill.skill.name)
         ) {
@@ -101,6 +90,7 @@ export const discoveryService = {
           salaryMax: career.salaryMax,
           salaryCurrency: career.salaryCurrency,
           experienceLevel: career.experienceLevel,
+          featured: career.featured,
           dayToDay,
           exampleCompanies: parseCompanies(career.exampleCompanies),
           industries: career.industries.map((i) => i.industry.name),
@@ -115,7 +105,11 @@ export const discoveryService = {
     const hasSignals = signals.length > 0;
     const signalLabels = signals.map((s) => s.label.toLowerCase());
 
-    const sorted = results.sort((a, b) => b.matchScore - a.matchScore);
+    const sorted = results.sort((a, b) => {
+      if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+      if (a.career.featured !== b.career.featured) return a.career.featured ? -1 : 1;
+      return a.career.title.localeCompare(b.career.title);
+    });
 
     return {
       results: sorted,
@@ -126,7 +120,7 @@ export const discoveryService = {
     };
   },
 
-  async getEmerging(limit = 12) {
+  async getEmerging(limit = MIN_CAREERS_PER_PAGE) {
     return db.career.findMany({
       where: {
         status: CareerStatus.PUBLISHED,
@@ -161,7 +155,7 @@ export const discoveryService = {
     });
   },
 
-  async getRandom(limit = 6) {
+  async getRandom(limit = MIN_CAREERS_PER_PAGE) {
     const careers = await db.career.findMany({
       where: { status: CareerStatus.PUBLISHED },
       select: {
@@ -195,15 +189,15 @@ export const discoveryService = {
 };
 
 async function resolveSignalLabels(filters: DiscoveryFilters): Promise<SignalMatch[]> {
-  const [interests, skills, activities] = await Promise.all([
+  const [interests, skills, workStyles] = await Promise.all([
     db.interest.findMany({ select: { slug: true, name: true } }),
     db.skill.findMany({ select: { slug: true, name: true } }),
-    db.activity.findMany({ select: { slug: true, name: true } }),
+    db.workStyle.findMany({ select: { slug: true, name: true } }),
   ]);
 
   const interestMap = new Map(interests.map((i) => [i.slug, i.name]));
   const skillMap = new Map(skills.map((s) => [s.slug, s.name]));
-  const activityMap = new Map(activities.map((a) => [a.slug, a.name]));
+  const workStyleMap = new Map(workStyles.map((w) => [w.slug, w.name]));
 
   const signals: SignalMatch[] = [];
 
@@ -211,17 +205,13 @@ async function resolveSignalLabels(filters: DiscoveryFilters): Promise<SignalMat
     const label = interestMap.get(slug);
     if (label) signals.push({ slug, label, kind: "interest" });
   }
-  for (const slug of filters.skillsHave ?? []) {
+  for (const slug of filters.skills ?? []) {
     const label = skillMap.get(slug);
-    if (label) signals.push({ slug, label, kind: "skillHave" });
+    if (label) signals.push({ slug, label, kind: "skill" });
   }
-  for (const slug of filters.skillsLearn ?? []) {
-    const label = skillMap.get(slug);
-    if (label) signals.push({ slug, label, kind: "skillLearn" });
-  }
-  for (const slug of filters.activities ?? []) {
-    const label = activityMap.get(slug);
-    if (label) signals.push({ slug, label, kind: "activity" });
+  for (const slug of filters.workStyles ?? []) {
+    const label = workStyleMap.get(slug);
+    if (label) signals.push({ slug, label, kind: "workStyle" });
   }
 
   return signals;

@@ -1,8 +1,7 @@
 export type DiscoveryFilters = {
   interests?: string[];
-  skillsHave?: string[];
-  skillsLearn?: string[];
-  activities?: string[];
+  skills?: string[];
+  workStyles?: string[];
 };
 
 export type DiscoveryResult = {
@@ -16,6 +15,7 @@ export type DiscoveryResult = {
     salaryMax: number | null;
     salaryCurrency: string;
     experienceLevel: string | null;
+    featured: boolean;
     dayToDay: string | null;
     exampleCompanies: string[];
     industries: string[];
@@ -36,16 +36,8 @@ export type DiscoveryResponse = {
 
 export type DiscoveryTaxonomy = {
   interests: Array<{ slug: string; name: string }>;
-  skillsHave: Array<{ slug: string; name: string }>;
-  skillsLearn: Array<{ slug: string; name: string }>;
-  activities: Array<{ slug: string; name: string }>;
-};
-
-export type TagSection = {
-  key: keyof DiscoveryFilters;
-  label: string;
-  hint?: string;
-  items: Array<{ slug: string; name: string }>;
+  skills: Array<{ slug: string; name: string }>;
+  workStyles: Array<{ slug: string; name: string }>;
 };
 
 export const DISCOVERY_TAG_SECTIONS: Array<{
@@ -53,8 +45,7 @@ export const DISCOVERY_TAG_SECTIONS: Array<{
   label: string;
   hint?: string;
 }> = [
-  { key: "interests", label: "My interests" },
-  { key: "skillsHave", label: "Skills I have" },
-  { key: "skillsLearn", label: "Skills I want to explore" },
-  { key: "activities", label: "Things I enjoy doing" },
+  { key: "interests", label: "Interests" },
+  { key: "skills", label: "Skills & abilities" },
+  { key: "workStyles", label: "Work style" },
 ];

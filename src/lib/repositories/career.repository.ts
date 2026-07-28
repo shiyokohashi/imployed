@@ -137,7 +137,7 @@ export const careerRepository = {
       select: {
         id: true,
         interests: { select: { interestId: true } },
-        activities: { select: { activityId: true } },
+        workStyles: { select: { workStyleId: true } },
         skills: { select: { skillId: true } },
         industries: { select: { industryId: true } },
         relatedFrom: {
@@ -159,7 +159,7 @@ export const careerRepository = {
     ];
 
     const sourceInterestIds = new Set(source.interests.map((item) => item.interestId));
-    const sourceActivityIds = new Set(source.activities.map((item) => item.activityId));
+    const sourceWorkStyleIds = new Set(source.workStyles.map((item) => item.workStyleId));
     const sourceSkillIds = new Set(source.skills.map((item) => item.skillId));
     const sourceIndustryIds = new Set(source.industries.map((item) => item.industryId));
 
@@ -168,7 +168,7 @@ export const careerRepository = {
       select: {
         slug: true,
         interests: { select: { interestId: true } },
-        activities: { select: { activityId: true } },
+        workStyles: { select: { workStyleId: true } },
         skills: { select: { skillId: true } },
         industries: { select: { industryId: true } },
       },
@@ -181,8 +181,8 @@ export const careerRepository = {
         for (const item of candidate.interests) {
           if (sourceInterestIds.has(item.interestId)) score += 3;
         }
-        for (const item of candidate.activities) {
-          if (sourceActivityIds.has(item.activityId)) score += 2;
+        for (const item of candidate.workStyles) {
+          if (sourceWorkStyleIds.has(item.workStyleId)) score += 2;
         }
         for (const item of candidate.skills) {
           if (sourceSkillIds.has(item.skillId)) score += 2;
