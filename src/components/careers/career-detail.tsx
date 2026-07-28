@@ -1,0 +1,150 @@
+import Link from "next/link";
+
+import { TagList } from "@/components/careers/tag-list";
+import { SalaryRangeDisplay } from "@/components/careers/salary-range";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { CareerDetail } from "@/lib/types/career";
+
+type CareerDetailViewProps = {
+  career: CareerDetail;
+};
+
+function formatLabel(value: string): string {
+  return value
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+export function CareerDetailView({ career }: CareerDetailViewProps) {
+  const relatedCareers = career.relatedFrom.map((r) => r.toCareer);
+
+  return (
+    <article className="space-y-8">
+      <header className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {career.experienceLevel && (
+            <Badge variant="secondary">{formatLabel(career.experienceLevel)}</Badge>
+          )}
+          {career.growthOutlook && (
+            <Badge variant="outline">{formatLabel(career.growthOutlook)} growth</Badge>
+          )}
+        </div>
+
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          {career.title}
+        </h1>
+
+        {career.tagline && (
+          <p className="text-lg text-muted-foreground">{career.tagline}</p>
+        )}
+
+        <SalaryRangeDisplay
+          className="text-base font-medium text-foreground"
+          salary={{
+            min: career.salaryMin,
+            max: career.salaryMax,
+            currency: career.salaryCurrency,
+            period: career.salaryPeriod,
+          }}
+        />
+      </header>
+
+      {career.summary && (
+        <section className="prose prose-neutral dark:prose-invert max-w-none">
+          <p className="text-base leading-relaxed text-foreground/90">{career.summary}</p>
+        </section>
+      )}
+
+      {career.description && (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold">About this career</h2>
+          <p className="leading-relaxed text-muted-foreground whitespace-pre-line">
+            {career.description}
+          </p>
+        </section>
+      )}
+
+      {career.highlights.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold">Highlights</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {career.highlights.map((highlight) => (
+              <Card key={highlight.id}>
+                <CardHeader>
+                  <CardTitle className="text-base">{highlight.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-sm leading-relaxed">
+                    {highlight.body}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="grid gap-6 sm:grid-cols-2">
+        {career.skills.length > 0 && (
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">Skills</h2>
+            <TagList items={career.skills.map((s) => s.skill.name)} />
+          </div>
+        )}
+
+        {career.interests.length > 0 && (
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">Interests</h2>
+            <TagList
+              items={career.interests.map((i) => i.interest.name)}
+              variant="outline"
+            />
+          </div>
+        )}
+
+        {career.industries.length > 0 && (
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">Industries</h2>
+            <TagList items={career.industries.map((i) => i.industry.name)} />
+          </div>
+        )}
+
+        {career.workStyles.length > 0 && (
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">Work style</h2>
+            <TagList
+              items={career.workStyles.map((w) => w.workStyle.name)}
+              variant="outline"
+            />
+          </div>
+        )}
+      </section>
+
+      {relatedCareers.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold">Related careers</h2>
+          <div className="flex flex-wrap gap-2">
+            {relatedCareers.map((related) => (
+              <Link
+                key={related.slug}
+                href={`/careers/${related.slug}`}
+                className="rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted"
+              >
+                {related.title}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+    </article>
+  );
+}

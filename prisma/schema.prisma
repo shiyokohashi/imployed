@@ -1,0 +1,344 @@
+// Imployed — Career Discovery Platform
+// All career data lives here. Frontend reads only. Future AI agents write here.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum CareerStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SkillCategory {
+  TECHNICAL
+  SOFT
+  DOMAIN
+  TOOL
+}
+
+enum ExperienceLevel {
+  ENTRY
+  MID
+  SENIOR
+  EXECUTIVE
+}
+
+enum GrowthOutlook {
+  DECLINING
+  STABLE
+  GROWING
+  HIGH_GROWTH
+}
+
+enum SalaryPeriod {
+  HOURLY
+  ANNUAL
+}
+
+enum CareerRelationType {
+  SIMILAR
+  PATHWAY_FROM
+  PATHWAY_TO
+  ALTERNATIVE
+}
+
+enum WorkStyleCategory {
+  APPROACH
+  ENVIRONMENT
+}
+
+enum SkillPickerGroup {
+  HAVE
+  LEARN
+}
+
+enum IngestionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// ---------------------------------------------------------------------------
+// Core entity: Career
+// ---------------------------------------------------------------------------
+
+model Career {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  tagline     String?
+  summary     String? @db.Text
+  description String? @db.Text
+
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String       @default("USD")
+  salaryPeriod   SalaryPeriod @default(ANNUAL)
+
+  experienceLevel ExperienceLevel?
+  growthOutlook   GrowthOutlook?
+
+  status   CareerStatus @default(DRAFT)
+  featured Boolean      @default(false)
+
+  /// Timestamp of last agent or human verification
+  lastVerifiedAt DateTime?
+  /// Provenance metadata from ingestion agents (source URLs, confidence, etc.)
+  sourceMetadata Json?
+
+  /// Example employers for filtering context (populated by agents)
+  exampleCompanies Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  skills            CareerSkill[]
+  interests         CareerInterest[]
+  industries        CareerIndustry[]
+  workStyles        CareerWorkStyle[]
+  personalityTraits CareerPersonalityTrait[]
+  priorities        CareerPriority[]
+  activities        CareerActivity[]
+  highlights        CareerHighlight[]
+
+  relatedFrom CareerRelation[] @relation("RelatedFrom")
+  relatedTo   CareerRelation[] @relation("RelatedTo")
+
+  @@index([status, featured])
+  @@index([title])
+  @@map("careers")
+}
+
+// ---------------------------------------------------------------------------
+// Taxonomy entities (reusable across careers)
+// ---------------------------------------------------------------------------
+
+model Skill {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String?       @db.Text
+  category         SkillCategory    @default(DOMAIN)
+  skillPickerGroup SkillPickerGroup?
+
+  careers CareerSkill[]
+
+  @@index([category])
+  @@map("skills")
+}
+
+model Interest {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String? @db.Text
+
+  careers CareerInterest[]
+
+  @@map("interests")
+}
+
+model Industry {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String? @db.Text
+
+  careers CareerIndustry[]
+
+  @@map("industries")
+}
+
+model WorkStyle {
+  id          String            @id @default(cuid())
+  slug        String            @unique
+  name        String
+  description String?           @db.Text
+  category    WorkStyleCategory @default(APPROACH)
+
+  careers CareerWorkStyle[]
+
+  @@map("work_styles")
+}
+
+model Activity {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String? @db.Text
+
+  careers CareerActivity[]
+
+  @@map("activities")
+}
+
+model CareerActivity {
+  careerId   String
+  activityId String
+  relevance  Int @default(3)
+
+  career   Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@id([careerId, activityId])
+  @@map("career_activities")
+}
+
+model Priority {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String? @db.Text
+
+  careers CareerPriority[]
+
+  @@map("priorities")
+}
+
+model CareerPriority {
+  careerId   String
+  priorityId String
+  score      Int @default(3) // 1–5 how well this career satisfies the priority
+
+  career   Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  priority Priority @relation(fields: [priorityId], references: [id], onDelete: Cascade)
+
+  @@id([careerId, priorityId])
+  @@map("career_priorities")
+}
+
+model PersonalityTrait {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String? @db.Text
+
+  careers CareerPersonalityTrait[]
+
+  @@map("personality_traits")
+}
+
+// ---------------------------------------------------------------------------
+// Join tables with relevance scoring for discovery matching
+// ---------------------------------------------------------------------------
+
+model CareerSkill {
+  careerId       String
+  skillId        String
+  importance     Int     @default(3) // 1 (nice-to-have) – 5 (critical)
+  isRequired     Boolean @default(false)
+  isTransferable Boolean @default(true)
+
+  career Career @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  skill  Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([careerId, skillId])
+  @@map("career_skills")
+}
+
+model CareerInterest {
+  careerId  String
+  interestId String
+  relevance Int @default(3) // 1–5 fit score
+
+  career   Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([careerId, interestId])
+  @@map("career_interests")
+}
+
+model CareerIndustry {
+  careerId   String
+  industryId String
+  relevance  Int @default(3)
+
+  career   Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  industry Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
+
+  @@id([careerId, industryId])
+  @@map("career_industries")
+}
+
+model CareerWorkStyle {
+  careerId    String
+  workStyleId String
+  fitScore    Int @default(3) // 1–5
+
+  career    Career    @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  workStyle WorkStyle @relation(fields: [workStyleId], references: [id], onDelete: Cascade)
+
+  @@id([careerId, workStyleId])
+  @@map("career_work_styles")
+}
+
+model CareerPersonalityTrait {
+  careerId          String
+  personalityTraitId String
+  relevance         Int @default(3)
+
+  career           Career           @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  personalityTrait PersonalityTrait @relation(fields: [personalityTraitId], references: [id], onDelete: Cascade)
+
+  @@id([careerId, personalityTraitId])
+  @@map("career_personality_traits")
+}
+
+// ---------------------------------------------------------------------------
+// Structured career content
+// ---------------------------------------------------------------------------
+
+model CareerHighlight {
+  id        String @id @default(cuid())
+  careerId  String
+  title     String
+  body      String @db.Text
+  sortOrder Int    @default(0)
+
+  career Career @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@index([careerId, sortOrder])
+  @@map("career_highlights")
+}
+
+model CareerRelation {
+  fromCareerId String
+  toCareerId   String
+  relationType CareerRelationType
+
+  fromCareer Career @relation("RelatedFrom", fields: [fromCareerId], references: [id], onDelete: Cascade)
+  toCareer   Career @relation("RelatedTo", fields: [toCareerId], references: [id], onDelete: Cascade)
+
+  @@id([fromCareerId, toCareerId, relationType])
+  @@map("career_relations")
+}
+
+// ---------------------------------------------------------------------------
+// Ingestion tracking (for future AI agents — frontend never touches this)
+// ---------------------------------------------------------------------------
+
+model IngestionRun {
+  id               String          @id @default(cuid())
+  agentName        String
+  status           IngestionStatus @default(PENDING)
+  startedAt        DateTime        @default(now())
+  completedAt      DateTime?
+  recordsProcessed Int             @default(0)
+  errorMessage     String?         @db.Text
+  metadata         Json?
+
+  @@index([agentName, startedAt])
+  @@map("ingestion_runs")
+}

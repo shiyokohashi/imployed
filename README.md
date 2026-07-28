@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Imployed
 
-## Getting Started
+A career discovery platform — not a job board.
 
-First, run the development server:
+Imployed helps people discover careers they never knew existed, matched to their interests, skills, work style, personality, salary goals, and industries.
+
+## Tech stack
+
+- **Next.js** (App Router) + TypeScript
+- **Tailwind CSS** + shadcn/ui
+- **Prisma ORM** + **Supabase** (Postgres)
+
+## Architecture
+
+```
+src/
+├── app/                    # Next.js routes (read-only, server components)
+│   ├── api/careers/        # Read-only REST API
+│   ├── careers/            # Career browse + detail pages
+│   └── discover/           # Filter-based career discovery
+├── components/
+│   ├── careers/            # Reusable career UI (no hardcoded data)
+│   ├── layout/             # Site header, footer
+│   └── ui/                 # shadcn/ui primitives
+├── lib/
+│   ├── db.ts               # Prisma client singleton
+│   ├── repositories/       # All database queries
+│   ├── services/           # Business logic (discovery matching)
+│   └── types/              # Shared TypeScript types
+agents/                     # Future AI ingestion agents (write to DB)
+prisma/
+├── schema.prisma           # Single source of truth for data models
+└── seed.ts                 # Development seed data
+```
+
+### Core rules
+
+1. **Frontend reads, agents write.** React components and pages never scrape the web or call external career APIs. All data comes from Postgres via repositories.
+2. **No hardcoded careers.** Career information lives in the database, seeded or ingested — never embedded in components.
+3. **Loose coupling.** Components receive typed props. Repositories handle queries. Services handle matching logic.
+4. **Agent-ready.** The `IngestionRun` model and `sourceMetadata` fields are designed for future AI agents to plug in without frontend changes.
+
+## Getting started
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Supabase
+
+Copy the example env file and add your Supabase connection strings:
+
+```bash
+cp .env.example .env
+```
+
+Get your URLs from **Supabase Dashboard → Project Settings → Database**.
+
+### 3. Run migrations and seed
+
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+### 4. Start the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run db:generate` | Regenerate Prisma client |
+| `npm run db:migrate` | Run database migrations |
+| `npm run db:seed` | Seed development data |
+| `npm run db:studio` | Open Prisma Studio |
 
-## Learn More
+## Data model overview
 
-To learn more about Next.js, take a look at the following resources:
+| Model | Purpose |
+|-------|---------|
+| `Career` | Core career entity with salary, experience, growth outlook |
+| `Skill` | Technical, soft, domain, and tool skills |
+| `Interest` | User interest areas for discovery matching |
+| `Industry` | Industry verticals |
+| `WorkStyle` | Collaborative, independent, remote-friendly, etc. |
+| `PersonalityTrait` | Personality fit dimensions |
+| `CareerRelation` | Similar careers and career pathways |
+| `IngestionRun` | Agent run tracking (future) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Join tables (`CareerSkill`, `CareerInterest`, etc.) include relevance scores used by the discovery engine.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private — Imployed startup project.
