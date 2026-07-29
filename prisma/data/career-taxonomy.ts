@@ -2,6 +2,7 @@ import type { CareerCategoryDefinition } from "./career-taxonomy.types";
 import { BUSINESS_CAREERS } from "./categories/business";
 import { DESIGN_CREATIVE_CAREERS } from "./categories/design-creative";
 import { FINANCE_CAREERS } from "./categories/finance";
+import { HEALTHCARE_CAREERS } from "./categories/healthcare";
 import { LEGACY_CATEGORIES } from "./categories/legacy-pending-expansion";
 import { SCIENCE_CAREERS } from "./categories/science";
 import { TECHNOLOGY_CAREERS } from "./categories/technology";
@@ -11,7 +12,7 @@ export { c } from "./career-builder";
 
 /**
  * Product taxonomy tree — category batches live in prisma/data/categories/.
- * Batches 1–5: Technology, Business, Finance, Design & Creative, Science
+ * Batches 1–6: Technology, Business, Finance, Design & Creative, Science, Healthcare
  */
 export const CAREER_TAXONOMY: CareerCategoryDefinition[] = [
   {
@@ -48,6 +49,13 @@ export const CAREER_TAXONOMY: CareerCategoryDefinition[] = [
     profile: "science",
     primaryIndustry: "sustainability",
     careers: SCIENCE_CAREERS,
+  },
+  {
+    slug: "healthcare",
+    name: "Healthcare",
+    profile: "health",
+    primaryIndustry: "healthcare",
+    careers: HEALTHCARE_CAREERS,
   },
   ...LEGACY_CATEGORIES,
 ];
