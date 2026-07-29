@@ -1,6 +1,6 @@
 import { CareerStatus, GrowthOutlook } from "@/generated/prisma/client";
+import { CAREERS_PER_PAGE } from "@/lib/constants/discovery";
 import { db } from "@/lib/db";
-import { MIN_CAREERS_PER_PAGE } from "@/lib/constants/discovery";
 import type { DiscoveryFilters, DiscoveryResponse, DiscoveryResult } from "@/lib/types/discovery";
 
 type SignalMatch = { slug: string; label: string; kind: string };
@@ -120,7 +120,8 @@ export const discoveryService = {
     };
   },
 
-  async getEmerging(limit = MIN_CAREERS_PER_PAGE) {
+  async getEmerging(options: { limit?: number; offset?: number } = {}) {
+    const { limit = CAREERS_PER_PAGE, offset = 0 } = options;
     return db.career.findMany({
       where: {
         status: CareerStatus.PUBLISHED,
@@ -128,6 +129,7 @@ export const discoveryService = {
       },
       orderBy: [{ featured: "desc" }, { title: "asc" }],
       take: limit,
+      skip: offset,
       select: {
         id: true,
         slug: true,
@@ -155,7 +157,16 @@ export const discoveryService = {
     });
   },
 
-  async getRandom(limit = MIN_CAREERS_PER_PAGE) {
+  async countEmerging() {
+    return db.career.count({
+      where: {
+        status: CareerStatus.PUBLISHED,
+        growthOutlook: { in: [GrowthOutlook.HIGH_GROWTH, GrowthOutlook.GROWING] },
+      },
+    });
+  },
+
+  async getRandom(limit = 6) {
     const careers = await db.career.findMany({
       where: { status: CareerStatus.PUBLISHED },
       select: {

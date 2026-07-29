@@ -1,4 +1,5 @@
 import { CareerRelationType, CareerStatus, Prisma } from "@/generated/prisma/client";
+import { CAREERS_PER_PAGE } from "@/lib/constants/discovery";
 import { db } from "@/lib/db";
 import type { CareerDetail, CareerListItem } from "@/lib/types/career";
 
@@ -46,7 +47,7 @@ export type CareerQueryOptions = {
 
 export const careerRepository = {
   async findPublished(options: CareerQueryOptions = {}): Promise<CareerListItem[]> {
-    const { featured, industry, skill, interest, query, limit = 24, offset = 0 } =
+    const { featured, industry, skill, interest, query, limit = CAREERS_PER_PAGE, offset = 0 } =
       options;
 
     const where: Prisma.CareerWhereInput = {

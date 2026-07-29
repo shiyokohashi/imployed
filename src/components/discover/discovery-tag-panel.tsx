@@ -26,6 +26,7 @@ export function DiscoveryTagPanel({ taxonomy, active }: DiscoveryTagPanelProps) 
 
   function handleToggle(key: keyof DiscoveryFilters, slug: string, selected: string[]) {
     const next = toggleTagInParams(searchParams, key, slug, selected);
+    next.delete("page");
     const query = next.toString();
     router.replace(query ? `/discover?${query}` : "/discover", { scroll: false });
   }

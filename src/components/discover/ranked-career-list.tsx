@@ -9,9 +9,15 @@ import { MatchResultCard } from "@/components/discover/match-result-card";
 type RankedCareerListProps = {
   results: DiscoveryResult[];
   showScores?: boolean;
+  /** Global rank offset when viewing a paginated slice (page 2 → 50). */
+  detailOffset?: number;
 };
 
-export function RankedCareerList({ results, showScores = true }: RankedCareerListProps) {
+export function RankedCareerList({
+  results,
+  showScores = true,
+  detailOffset = 0,
+}: RankedCareerListProps) {
   if (results.length === 0) {
     return (
       <p className="text-muted-foreground">No careers available yet. Run the database seed.</p>
@@ -21,7 +27,7 @@ export function RankedCareerList({ results, showScores = true }: RankedCareerLis
   return (
     <div className="space-y-3">
       {results.map((result, index) => {
-        const rank = index + 1;
+        const rank = detailOffset + index + 1;
         const isDetailed = rank <= DISCOVERY_DETAIL_CUTOFF;
 
         if (isDetailed) {

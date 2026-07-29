@@ -5,8 +5,14 @@ import { DiscoveryTagPanel } from "@/components/discover/discovery-tag-panel";
 import { RankedCareerList } from "@/components/discover/ranked-career-list";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { MIN_CAREERS_PER_PAGE } from "@/lib/constants/discovery";
+import { ListPagination } from "@/components/ui/list-pagination";
+import { CAREERS_PER_PAGE } from "@/lib/constants/discovery";
 import { hasDiscoverySignals, searchParamsToFilters } from "@/lib/discovery-params";
+import {
+  getPaginationMeta,
+  paginateOffset,
+  parsePage,
+} from "@/lib/pagination";
 import { taxonomyRepository } from "@/lib/repositories/taxonomy.repository";
 import { discoveryService } from "@/lib/services/discovery.service";
 
@@ -20,11 +26,16 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
   const params = await searchParams;
   const filters = searchParamsToFilters(params);
   const hasSignals = hasDiscoverySignals(filters);
+  const page = parsePage(params.page);
 
   const [taxonomy, discovery] = await Promise.all([
     taxonomyRepository.getDiscoveryTaxonomy(),
     discoveryService.discover(filters),
   ]);
+
+  const pagination = getPaginationMeta(discovery.total, page, CAREERS_PER_PAGE);
+  const offset = paginateOffset(pagination.page, CAREERS_PER_PAGE);
+  const pageResults = discovery.results.slice(offset, offset + CAREERS_PER_PAGE);
 
   return (
     <>
@@ -33,7 +44,8 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
         <div className="mb-10 max-w-2xl space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight">Discover</h1>
           <p className="text-muted-foreground">
-            {MIN_CAREERS_PER_PAGE}+ careers ranked by fit — scroll down for unexpected paths.
+            {discovery.total.toLocaleString()} careers ranked by fit — up to {CAREERS_PER_PAGE} per
+            page.
           </p>
         </div>
 
@@ -50,12 +62,22 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
               <h2 className="text-xl font-semibold tracking-tight">{discovery.headline}</h2>
               <p className="text-sm text-muted-foreground">
                 {hasSignals
-                  ? `${discovery.total} careers ranked — best matches at the top, more to explore as you scroll.`
-                  : `${discovery.total} careers to explore — add tags on the left to re-rank by fit.`}
+                  ? `${discovery.total.toLocaleString()} careers ranked — best matches on this page, use Next for more.`
+                  : `${discovery.total.toLocaleString()} careers to explore — add tags on the left to re-rank by fit.`}
               </p>
             </div>
 
-            <RankedCareerList results={discovery.results} showScores={hasSignals} />
+            <RankedCareerList
+              results={pageResults}
+              showScores={hasSignals}
+              detailOffset={offset}
+            />
+
+            <ListPagination
+              meta={pagination}
+              pathname="/discover"
+              searchParams={params}
+            />
           </div>
         </div>
 

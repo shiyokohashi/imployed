@@ -1,22 +1,40 @@
-import Link from "next/link";
-
 import { CareerGrid } from "@/components/careers/career-grid";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { ListPagination } from "@/components/ui/list-pagination";
+import { CAREERS_PER_PAGE } from "@/lib/constants/discovery";
+import {
+  getPaginationMeta,
+  paginateOffset,
+  parsePage,
+} from "@/lib/pagination";
 import { careerRepository } from "@/lib/repositories/career.repository";
 
 export const dynamic = "force-dynamic";
 
 type CareersPageProps = {
-  searchParams: Promise<{ q?: string; industry?: string }>;
+  searchParams: Promise<{ q?: string; industry?: string; page?: string }>;
 };
 
 export default async function CareersPage({ searchParams }: CareersPageProps) {
   const params = await searchParams;
-  const careers = await careerRepository.findPublished({
-    query: params.q,
-    industry: params.industry,
-  });
+  const page = parsePage(params.page);
+  const offset = paginateOffset(page, CAREERS_PER_PAGE);
+
+  const [careers, total] = await Promise.all([
+    careerRepository.findPublished({
+      query: params.q,
+      industry: params.industry,
+      limit: CAREERS_PER_PAGE,
+      offset,
+    }),
+    careerRepository.countPublished({
+      query: params.q,
+      industry: params.industry,
+    }),
+  ]);
+
+  const pagination = getPaginationMeta(total, page, CAREERS_PER_PAGE);
 
   return (
     <>
@@ -30,7 +48,14 @@ export default async function CareersPage({ searchParams }: CareersPageProps) {
           </p>
         </div>
 
-        <CareerGrid careers={careers} />
+        <div className="space-y-10">
+          <CareerGrid careers={careers} />
+          <ListPagination
+            meta={pagination}
+            pathname="/careers"
+            searchParams={params}
+          />
+        </div>
       </main>
       <SiteFooter />
     </>

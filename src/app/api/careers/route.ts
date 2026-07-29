@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { CAREERS_PER_PAGE } from "@/lib/constants/discovery";
 import { careerRepository } from "@/lib/repositories/career.repository";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     skill: searchParams.get("skill") ?? undefined,
     interest: searchParams.get("interest") ?? undefined,
     featured: searchParams.get("featured") === "true" ? true : undefined,
-    limit: Number(searchParams.get("limit") ?? 24),
+    limit: Number(searchParams.get("limit") ?? CAREERS_PER_PAGE),
     offset: Number(searchParams.get("offset") ?? 0),
   });
 
