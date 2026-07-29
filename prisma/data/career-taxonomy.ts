@@ -8,6 +8,7 @@ import { LAW_POLICY_CAREERS } from "./categories/law-policy";
 import { LEGACY_CATEGORIES } from "./categories/legacy-pending-expansion";
 import { MEDIA_ENTERTAINMENT_CAREERS } from "./categories/media-entertainment";
 import { SCIENCE_CAREERS } from "./categories/science";
+import { SOCIAL_IMPACT_CAREERS } from "./categories/social-impact";
 import { TECHNOLOGY_CAREERS } from "./categories/technology";
 
 /** Shorthand kept for non-batch category entries still defined inline below. */
@@ -15,7 +16,7 @@ export { c } from "./career-builder";
 
 /**
  * Product taxonomy tree — category batches live in prisma/data/categories/.
- * Batches 1–9: Technology, Business, Finance, Design & Creative, Science, Healthcare, Education, Law & Policy, Media & Entertainment
+ * Batches 1–10: Technology, Business, Finance, Design & Creative, Science, Healthcare, Education, Law & Policy, Media & Entertainment, Social Impact
  */
 export const CAREER_TAXONOMY: CareerCategoryDefinition[] = [
   {
@@ -80,6 +81,13 @@ export const CAREER_TAXONOMY: CareerCategoryDefinition[] = [
     profile: "media",
     primaryIndustry: "media",
     careers: MEDIA_ENTERTAINMENT_CAREERS,
+  },
+  {
+    slug: "social-impact",
+    name: "Social Impact",
+    profile: "government",
+    primaryIndustry: "government",
+    careers: SOCIAL_IMPACT_CAREERS,
   },
   ...LEGACY_CATEGORIES,
 ];
