@@ -1,4 +1,5 @@
-import type { DiscoveryFilters } from "@/lib/types/discovery";
+import { parseSalaryPreference } from "@/lib/constants/salary-preference";
+import type { DiscoveryFilters, DiscoveryTagKey } from "@/lib/types/discovery";
 
 export function filtersToSearchParams(filters: DiscoveryFilters): URLSearchParams {
   const params = new URLSearchParams();
@@ -12,6 +13,9 @@ export function filtersToSearchParams(filters: DiscoveryFilters): URLSearchParam
   for (const slug of filters.workStyles ?? []) {
     params.append("workStyles", slug);
   }
+  if (filters.salaryMin != null) {
+    params.set("salaryMin", String(filters.salaryMin));
+  }
 
   return params;
 }
@@ -19,16 +23,19 @@ export function filtersToSearchParams(filters: DiscoveryFilters): URLSearchParam
 export function searchParamsToFilters(
   params: Record<string, string | string[] | undefined>,
 ): DiscoveryFilters {
+  const salaryMin = parseSalaryPreference(params.salaryMin);
+
   return {
     interests: toArray(params.interests),
     skills: mergeArrays(toArray(params.skills), toArray(params.skillsHave)),
     workStyles: mergeArrays(toArray(params.workStyles), toArray(params.activities)),
+    ...(salaryMin != null ? { salaryMin } : {}),
   };
 }
 
 export function toggleTagInParams(
   current: URLSearchParams,
-  key: keyof DiscoveryFilters,
+  key: DiscoveryTagKey,
   slug: string,
   active: string[],
 ): URLSearchParams {
@@ -66,6 +73,9 @@ function mergeArrays(primary?: string[], legacy?: string[]): string[] | undefine
 
 export function hasDiscoverySignals(filters: DiscoveryFilters): boolean {
   return Boolean(
-    filters.interests?.length || filters.skills?.length || filters.workStyles?.length,
+    filters.interests?.length ||
+      filters.skills?.length ||
+      filters.workStyles?.length ||
+      filters.salaryMin != null,
   );
 }

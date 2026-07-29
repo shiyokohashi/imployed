@@ -3,10 +3,12 @@
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
+import { SalaryPreferenceBar } from "@/components/discover/salary-preference-bar";
 import { toggleTagInParams } from "@/lib/discovery-params";
 import {
   DISCOVERY_TAG_SECTIONS,
   type DiscoveryFilters,
+  type DiscoveryTagKey,
   type DiscoveryTaxonomy,
 } from "@/lib/types/discovery";
 
@@ -24,7 +26,7 @@ export function DiscoveryTagPanel({ taxonomy, active }: DiscoveryTagPanelProps) 
     items: taxonomy[section.key],
   }));
 
-  function handleToggle(key: keyof DiscoveryFilters, slug: string, selected: string[]) {
+  function handleToggle(key: DiscoveryTagKey, slug: string, selected: string[]) {
     const next = toggleTagInParams(searchParams, key, slug, selected);
     next.delete("page");
     const query = next.toString();
@@ -39,6 +41,8 @@ export function DiscoveryTagPanel({ taxonomy, active }: DiscoveryTagPanelProps) 
           Add tags to get recommendations — or browse careers on the right.
         </p>
       </div>
+
+      <SalaryPreferenceBar value={active.salaryMin} />
 
       {sections.map((section) => {
         const selected = active[section.key] ?? [];

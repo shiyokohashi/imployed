@@ -1,5 +1,6 @@
 import { CareerStatus, GrowthOutlook } from "@/generated/prisma/client";
 import { CAREERS_PER_PAGE } from "@/lib/constants/discovery";
+import { formatSalaryCompact } from "@/lib/constants/salary-preference";
 import { db } from "@/lib/db";
 import type { DiscoveryFilters, DiscoveryResponse, DiscoveryResult } from "@/lib/types/discovery";
 
@@ -74,6 +75,19 @@ export const discoveryService = {
         }
       }
 
+      if (filters.salaryMin != null) {
+        const top = career.salaryMax ?? career.salaryMin ?? 0;
+        const bottom = career.salaryMin ?? 0;
+
+        if (top >= filters.salaryMin) {
+          score += 8 + Math.min(7, Math.floor((top - filters.salaryMin) / 25_000));
+          reasons.push(`Top of range meets your ${formatSalaryCompact(filters.salaryMin)}+ target`);
+        } else if (bottom >= filters.salaryMin * 0.85) {
+          score += 3;
+          reasons.push(`Starting pay is close to your ${formatSalaryCompact(filters.salaryMin)}+ target`);
+        }
+      }
+
       const dayToDay =
         career.highlights.find((h) => h.title.toLowerCase().includes("day-to-day"))?.body ??
         career.highlights[0]?.body ??
@@ -102,7 +116,7 @@ export const discoveryService = {
       };
     });
 
-    const hasSignals = signals.length > 0;
+    const hasSignals = signals.length > 0 || filters.salaryMin != null;
     const signalLabels = signals.map((s) => s.label.toLowerCase());
 
     const sorted = results.sort((a, b) => {
@@ -116,7 +130,7 @@ export const discoveryService = {
       total: sorted.length,
       filters,
       signalLabels,
-      headline: buildHeadline(signalLabels, hasSignals),
+      headline: buildHeadline(signalLabels, hasSignals, filters.salaryMin),
     };
   },
 
@@ -228,22 +242,32 @@ async function resolveSignalLabels(filters: DiscoveryFilters): Promise<SignalMat
   return signals;
 }
 
-function buildHeadline(labels: string[], hasSignals: boolean): string {
+function buildHeadline(
+  labels: string[],
+  hasSignals: boolean,
+  salaryMin?: number,
+): string {
+  const salaryPhrase = salaryMin ? ` earning ${formatSalaryCompact(salaryMin)}+` : "";
+
   if (!hasSignals) {
     return "Explore careers — add tags anytime to personalize.";
   }
 
+  if (labels.length === 0 && salaryMin != null) {
+    return `Careers${salaryPhrase} — explore these paths.`;
+  }
+
   if (labels.length === 1) {
-    return `Because you like ${labels[0]}, explore these career paths.`;
+    return `Because you like ${labels[0]}${salaryPhrase}, explore these career paths.`;
   }
 
   if (labels.length === 2) {
-    return `Because you like ${labels[0]} + ${labels[1]}, explore these career paths.`;
+    return `Because you like ${labels[0]} + ${labels[1]}${salaryPhrase}, explore these career paths.`;
   }
 
   const shown = labels.slice(0, 3).join(" + ");
   const extra = labels.length > 3 ? ` + ${labels.length - 3} more` : "";
-  return `Because you like ${shown}${extra}, explore these career paths.`;
+  return `Because you like ${shown}${extra}${salaryPhrase}, explore these career paths.`;
 }
 
 function parseCompanies(value: unknown): string[] {

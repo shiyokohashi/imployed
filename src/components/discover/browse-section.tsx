@@ -63,8 +63,8 @@ export function PersonalizeHint() {
     <div className="flex items-start gap-2 rounded-lg border border-dashed border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
       <Sparkles className="mt-0.5 size-4 shrink-0" />
       <p>
-        Skills and interests are signals, not requirements — selecting design won&apos;t limit
-        you to one role. We surface unexpected paths too.
+        Skills, salary, and interests are signals, not requirements — selecting design won&apos;t
+        limit you to one role. We surface unexpected paths too.
       </p>
     </div>
   );

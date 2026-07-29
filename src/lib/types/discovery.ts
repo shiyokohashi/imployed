@@ -1,7 +1,14 @@
-export type DiscoveryFilters = {
+export type DiscoveryTagKey = "interests" | "skills" | "workStyles";
+
+export type DiscoveryTagFilters = {
   interests?: string[];
   skills?: string[];
   workStyles?: string[];
+};
+
+export type DiscoveryFilters = DiscoveryTagFilters & {
+  /** Minimum desired annual salary (USD) — boosts higher-paying roles. */
+  salaryMin?: number;
 };
 
 export type DiscoveryResult = {
@@ -41,7 +48,7 @@ export type DiscoveryTaxonomy = {
 };
 
 export const DISCOVERY_TAG_SECTIONS: Array<{
-  key: keyof DiscoveryFilters;
+  key: DiscoveryTagKey;
   label: string;
   hint?: string;
 }> = [
