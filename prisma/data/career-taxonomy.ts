@@ -6,6 +6,7 @@ import { EDUCATION_CAREERS } from "./categories/education";
 import { HEALTHCARE_CAREERS } from "./categories/healthcare";
 import { LAW_POLICY_CAREERS } from "./categories/law-policy";
 import { LEGACY_CATEGORIES } from "./categories/legacy-pending-expansion";
+import { MEDIA_ENTERTAINMENT_CAREERS } from "./categories/media-entertainment";
 import { SCIENCE_CAREERS } from "./categories/science";
 import { TECHNOLOGY_CAREERS } from "./categories/technology";
 
@@ -14,7 +15,7 @@ export { c } from "./career-builder";
 
 /**
  * Product taxonomy tree — category batches live in prisma/data/categories/.
- * Batches 1–8: Technology, Business, Finance, Design & Creative, Science, Healthcare, Education, Law & Policy
+ * Batches 1–9: Technology, Business, Finance, Design & Creative, Science, Healthcare, Education, Law & Policy, Media & Entertainment
  */
 export const CAREER_TAXONOMY: CareerCategoryDefinition[] = [
   {
@@ -72,6 +73,13 @@ export const CAREER_TAXONOMY: CareerCategoryDefinition[] = [
     profile: "government",
     primaryIndustry: "government",
     careers: LAW_POLICY_CAREERS,
+  },
+  {
+    slug: "media-entertainment",
+    name: "Media & Entertainment",
+    profile: "media",
+    primaryIndustry: "media",
+    careers: MEDIA_ENTERTAINMENT_CAREERS,
   },
   ...LEGACY_CATEGORIES,
 ];
