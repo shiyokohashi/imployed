@@ -1,6 +1,19 @@
 import { parseSalaryPreference } from "@/lib/constants/salary-preference";
 import type { DiscoveryFilters, DiscoveryTagKey } from "@/lib/types/discovery";
 
+export function searchParamsToRecord(
+  params: URLSearchParams,
+): Record<string, string | string[] | undefined> {
+  const record: Record<string, string | string[] | undefined> = {};
+
+  for (const key of new Set(params.keys())) {
+    const values = params.getAll(key);
+    record[key] = values.length === 1 ? values[0] : values;
+  }
+
+  return record;
+}
+
 export function filtersToSearchParams(filters: DiscoveryFilters): URLSearchParams {
   const params = new URLSearchParams();
 

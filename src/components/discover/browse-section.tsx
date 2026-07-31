@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Sparkles, Shuffle, TrendingUp, Building2, Compass } from "lucide-react";
 
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LineItem, LineList } from "@/components/ui/line-list";
 
 const browseLinks = [
   {
@@ -32,40 +32,43 @@ const browseLinks = [
 
 export function BrowseSection() {
   return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">Or browse freely</h2>
-        <p className="text-sm text-muted-foreground">
+    <section className="space-y-5">
+      <div className="space-y-2">
+        <h2 className="type-subhead">Or browse freely</h2>
+        <p className="type-body">
           No tags needed — discovery works either way.
         </p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <LineList>
         {browseLinks.map((link) => (
-          <Link key={link.href} href={link.href} className="group block">
-            <Card className="h-full transition-colors group-hover:border-foreground/20">
-              <CardHeader className="gap-2">
-                <div className="flex items-center gap-2">
-                  <link.icon className="size-4 text-muted-foreground" />
-                  <CardTitle className="text-base">{link.title}</CardTitle>
-                </div>
-                <CardDescription>{link.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
+          <LineItem key={link.href}>
+            <Link
+              href={link.href}
+              className="group block transition-opacity hover:opacity-70"
+            >
+              <div className="flex items-center gap-2">
+                <link.icon className="size-3.5 text-muted-foreground" />
+                <p className="type-career-title">{link.title}</p>
+              </div>
+              <p className="type-body mt-1.5">{link.description}</p>
+            </Link>
+          </LineItem>
         ))}
-      </div>
+      </LineList>
     </section>
   );
 }
 
 export function PersonalizeHint() {
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-dashed border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-      <Sparkles className="mt-0.5 size-4 shrink-0" />
-      <p>
-        Skills, salary, and interests are signals, not requirements — selecting design won&apos;t
-        limit you to one role. We surface unexpected paths too.
-      </p>
+    <div className="type-body border-t border-foreground/12 pt-4">
+      <div className="flex items-start gap-2">
+        <Sparkles className="mt-0.5 size-3.5 shrink-0" />
+        <p>
+          Skills, salary, and interests are signals, not requirements — selecting design won&apos;t
+          limit you to one role. We surface unexpected paths too.
+        </p>
+      </div>
     </div>
   );
 }

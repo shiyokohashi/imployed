@@ -1,9 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-
-import { Badge } from "@/components/ui/badge";
 import { SalaryPreferenceBar } from "@/components/discover/salary-preference-bar";
+import { cn } from "@/lib/utils";
 import { toggleTagInParams } from "@/lib/discovery-params";
 import {
   DISCOVERY_TAG_SECTIONS,
@@ -15,12 +13,16 @@ import {
 type DiscoveryTagPanelProps = {
   taxonomy: DiscoveryTaxonomy;
   active: DiscoveryFilters;
+  searchParams: URLSearchParams;
+  replaceParams: (next: URLSearchParams) => void;
 };
 
-export function DiscoveryTagPanel({ taxonomy, active }: DiscoveryTagPanelProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
+export function DiscoveryTagPanel({
+  taxonomy,
+  active,
+  searchParams,
+  replaceParams,
+}: DiscoveryTagPanelProps) {
   const sections = DISCOVERY_TAG_SECTIONS.map((section) => ({
     ...section,
     items: taxonomy[section.key],
@@ -29,28 +31,35 @@ export function DiscoveryTagPanel({ taxonomy, active }: DiscoveryTagPanelProps) 
   function handleToggle(key: DiscoveryTagKey, slug: string, selected: string[]) {
     const next = toggleTagInParams(searchParams, key, slug, selected);
     next.delete("page");
-    const query = next.toString();
-    router.replace(query ? `/discover?${query}` : "/discover", { scroll: false });
+    replaceParams(next);
   }
 
   return (
-    <div className="space-y-8 rounded-xl border border-border bg-card p-6 shadow-xs">
-      <div className="space-y-1">
-        <h2 className="text-sm font-medium">Personalize (optional)</h2>
-        <p className="text-sm text-muted-foreground">
+    <div className="border-t border-foreground/12 pt-6">
+      <div className="space-y-2">
+        <h2 className="type-section-title normal-case tracking-[0.04em]">
+          Personalize (optional)
+        </h2>
+        <p className="type-body">
           Add tags to get recommendations — or browse careers on the right.
         </p>
       </div>
 
-      <SalaryPreferenceBar value={active.salaryMin} />
+      <div className="mt-6 border-t border-foreground/12 pt-6">
+        <SalaryPreferenceBar
+          value={active.salaryMin}
+          searchParams={searchParams}
+          replaceParams={replaceParams}
+        />
+      </div>
 
       {sections.map((section) => {
         const selected = active[section.key] ?? [];
 
         return (
-          <div key={section.key}>
-            <h3 className="mb-3 text-sm font-medium">{section.label}</h3>
-            <div className="flex flex-wrap gap-2">
+          <div key={section.key} className="mt-6 border-t border-foreground/12 pt-6">
+            <h3 className="type-label mb-3">{section.label}</h3>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {section.items.map((item) => {
                 const isActive = selected.includes(item.slug);
                 return (
@@ -58,8 +67,12 @@ export function DiscoveryTagPanel({ taxonomy, active }: DiscoveryTagPanelProps) 
                     key={item.slug}
                     type="button"
                     onClick={() => handleToggle(section.key, item.slug, selected)}
+                    className={cn(
+                      "type-body transition-opacity hover:opacity-70",
+                      isActive && "font-medium text-foreground"
+                    )}
                   >
-                    <Badge variant={isActive ? "default" : "outline"}>{item.name}</Badge>
+                    {item.name}
                   </button>
                 );
               })}

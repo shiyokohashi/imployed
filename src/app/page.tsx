@@ -1,67 +1,38 @@
-import Link from "next/link";
-
-import { CareerGrid } from "@/components/careers/career-grid";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
-import { Button } from "@/components/ui/button";
+import { ImployedWordmark } from "@/components/brand/imployed-wordmark";
+import { TumblingCareerTitles } from "@/components/home/tumbling-career-titles";
+import { SiteNavButtons } from "@/components/layout/site-nav-buttons";
 import { careerRepository } from "@/lib/repositories/career.repository";
 
 export const dynamic = "force-dynamic";
 
+async function loadTumblingTitles() {
+  try {
+    return await careerRepository.findTumblingTitles();
+  } catch (error) {
+    console.error("Homepage: could not load tumbling titles", error);
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const featuredCareers = await careerRepository.findFeatured();
+  const tumblingTitles = await loadTumblingTitles();
 
   return (
-    <>
-      <SiteHeader />
-      <main className="flex-1">
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="max-w-2xl space-y-6">
-            <p className="text-sm font-medium text-muted-foreground">
-              Career discovery, not job hunting
-            </p>
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-              Discover careers you never knew existed
-            </h1>
-            <p className="text-lg leading-relaxed text-muted-foreground">
-              Imployed helps you explore roles like Product Marketing Manager,
-              Solutions Engineer, and Design Technologist — matched to your
-              interests, skills, and work style.
-            </p>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Button render={<Link href="/discover" />} size="lg">
-                Start exploring
-              </Button>
-              <Button render={<Link href="/careers" />} variant="outline" size="lg">
-                Browse all careers
-              </Button>
-            </div>
-          </div>
-        </section>
+    <main className="relative h-svh min-h-[32rem] overflow-hidden">
+      <TumblingCareerTitles titles={tumblingTitles} />
 
-        <section className="border-t border-border bg-muted/40">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-            <div className="mb-8 flex items-end justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-semibold tracking-tight">
-                  Featured careers
-                </h2>
-                <p className="mt-1 text-muted-foreground">
-                  A taste of what&apos;s waiting to be discovered
-                </p>
-              </div>
-              <Link
-                href="/careers"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                View all →
-              </Link>
-            </div>
-            <CareerGrid careers={featuredCareers} />
-          </div>
-        </section>
-      </main>
-      <SiteFooter />
-    </>
+      <div className="pointer-events-none absolute inset-0 z-30 flex -translate-y-6 flex-col items-center justify-center gap-5 px-4 text-center sm:-translate-y-10 sm:gap-7">
+        <div className="space-y-4 sm:space-y-5">
+          <ImployedWordmark />
+          <p className="type-page-lead mx-auto max-w-md">
+            Discover careers you didn&apos;t know existed.
+          </p>
+        </div>
+
+        <div className="pointer-events-auto">
+          <SiteNavButtons size="lg" centered />
+        </div>
+      </div>
+    </main>
   );
 }

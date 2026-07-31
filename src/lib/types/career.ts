@@ -72,4 +72,9 @@ export type TaxonomyItem = {
   description: string | null;
 };
 
+export type IndustryFeaturedSection = {
+  industry: TaxonomyItem;
+  careers: CareerListItem[];
+};
+
 export type { DiscoveryTaxonomy } from "@/lib/types/discovery";

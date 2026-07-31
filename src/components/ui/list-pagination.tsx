@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { buildPageHref, type PaginationMeta } from "@/lib/pagination";
 
 type ListPaginationProps = {
@@ -23,35 +21,27 @@ export function ListPagination({ meta, pathname, searchParams }: ListPaginationP
     : null;
 
   return (
-    <div className="flex flex-col items-center gap-4 border-t border-border pt-8 sm:flex-row sm:justify-between">
-      <p className="text-sm text-muted-foreground">
+    <div className="flex flex-col items-center gap-5 pt-10 sm:flex-row sm:justify-between">
+      <p className="type-meta">
         Showing {start}–{end} of {meta.total.toLocaleString()}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-6">
         {prevHref ? (
-          <Button variant="outline" render={<Link href={prevHref} />}>
-            <ChevronLeft />
+          <Link href={prevHref} className="type-nav transition-opacity hover:opacity-70">
             Previous
-          </Button>
+          </Link>
         ) : (
-          <Button variant="outline" disabled>
-            <ChevronLeft />
-            Previous
-          </Button>
+          <span className="type-nav opacity-40">Previous</span>
         )}
-        <span className="px-2 text-sm text-muted-foreground">
+        <span className="type-meta">
           Page {meta.page} of {meta.totalPages}
         </span>
         {nextHref ? (
-          <Button render={<Link href={nextHref} />}>
+          <Link href={nextHref} className="type-nav transition-opacity hover:opacity-70">
             Next
-            <ChevronRight />
-          </Button>
+          </Link>
         ) : (
-          <Button disabled>
-            Next
-            <ChevronRight />
-          </Button>
+          <span className="type-nav opacity-40">Next</span>
         )}
       </div>
     </div>

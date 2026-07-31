@@ -1,4 +1,5 @@
 import { CareerGrid } from "@/components/careers/career-grid";
+import { PageHeader } from "@/components/layout/page-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { ListPagination } from "@/components/ui/list-pagination";
@@ -39,14 +40,12 @@ export default async function CareersPage({ searchParams }: CareersPageProps) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-6xl flex-1 px-4 py-12 sm:px-6">
-        <div className="mb-8 space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Explore careers</h1>
-          <p className="text-muted-foreground">
-            Browse our library of careers — each one a path you might not have
-            considered.
-          </p>
-        </div>
+      <main className="mx-auto max-w-6xl flex-1 px-8 py-14 sm:px-12">
+        <PageHeader
+          title="Explore careers"
+          lead="Browse our library of careers — each one a path you might not have considered."
+          className="mb-8 max-w-2xl"
+        />
 
         <div className="space-y-10">
           <CareerGrid careers={careers} />

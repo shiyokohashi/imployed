@@ -1,11 +1,8 @@
-import { Suspense } from "react";
-
-import { BrowseSection, PersonalizeHint } from "@/components/discover/browse-section";
-import { DiscoveryTagPanel } from "@/components/discover/discovery-tag-panel";
-import { RankedCareerList } from "@/components/discover/ranked-career-list";
+import { BrowseSection } from "@/components/discover/browse-section";
+import { DiscoverExperience } from "@/components/discover/discover-experience";
+import { PageHeader } from "@/components/layout/page-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { ListPagination } from "@/components/ui/list-pagination";
 import { CAREERS_PER_PAGE } from "@/lib/constants/discovery";
 import { hasDiscoverySignals, searchParamsToFilters } from "@/lib/discovery-params";
 import {
@@ -40,48 +37,24 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-6xl flex-1 px-4 py-12 sm:px-6">
-        <div className="mb-10 max-w-2xl space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Discover</h1>
-          <p className="text-muted-foreground">
-            {discovery.total.toLocaleString()} careers ranked by fit — up to {CAREERS_PER_PAGE} per
-            page.
-          </p>
-        </div>
+      <main className="mx-auto max-w-6xl flex-1 px-8 py-14 sm:px-12 md:px-16 lg:px-20">
+        <PageHeader
+          title="Discover"
+          lead={`${discovery.total.toLocaleString()} careers ranked by fit — up to ${CAREERS_PER_PAGE} per page.`}
+        />
 
-        <div className="grid gap-10 lg:grid-cols-[280px_1fr] lg:items-start">
-          <aside className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
-            <Suspense fallback={null}>
-              <DiscoveryTagPanel taxonomy={taxonomy} active={filters} />
-            </Suspense>
-            <PersonalizeHint />
-          </aside>
+        <DiscoverExperience
+          taxonomy={taxonomy}
+          initialDiscovery={{
+            ...discovery,
+            results: pageResults,
+          }}
+          initialHasSignals={hasSignals}
+          initialPagination={pagination}
+          initialDetailOffset={offset}
+        />
 
-          <div className="min-w-0 space-y-6">
-            <div className="space-y-1">
-              <h2 className="text-xl font-semibold tracking-tight">{discovery.headline}</h2>
-              <p className="text-sm text-muted-foreground">
-                {hasSignals
-                  ? `${discovery.total.toLocaleString()} careers ranked — best matches on this page, use Next for more.`
-                  : `${discovery.total.toLocaleString()} careers to explore — add tags on the left to re-rank by fit.`}
-              </p>
-            </div>
-
-            <RankedCareerList
-              results={pageResults}
-              showScores={hasSignals}
-              detailOffset={offset}
-            />
-
-            <ListPagination
-              meta={pagination}
-              pathname="/discover"
-              searchParams={params}
-            />
-          </div>
-        </div>
-
-        <div className="mt-12">
+        <div className="mt-14">
           <BrowseSection />
         </div>
       </main>

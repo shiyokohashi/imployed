@@ -1,7 +1,7 @@
 import { CareerRelationType, CareerStatus, Prisma } from "@/generated/prisma/client";
 import { CAREERS_PER_PAGE } from "@/lib/constants/discovery";
 import { db } from "@/lib/db";
-import type { CareerDetail, CareerListItem } from "@/lib/types/career";
+import type { CareerDetail, CareerListItem, IndustryFeaturedSection } from "@/lib/types/career";
 
 const careerListInclude = {
   industries: {
@@ -116,6 +116,73 @@ export const careerRepository = {
 
   async findFeatured(limit = 6): Promise<CareerListItem[]> {
     return this.findPublished({ featured: true, limit });
+  },
+
+  /** Featured careers grouped by primary industry (highest relevance). */
+  async findFeaturedGroupedByIndustry(): Promise<IndustryFeaturedSection[]> {
+    const featuredCareers = await db.career.findMany({
+      where: { status: CareerStatus.PUBLISHED, featured: true },
+      include: careerListInclude,
+      orderBy: [{ title: "asc" }],
+    });
+
+    const sectionMap = new Map<string, IndustryFeaturedSection>();
+
+    for (const career of featuredCareers) {
+      const primaryIndustry = career.industries[0]?.industry;
+      if (!primaryIndustry) continue;
+
+      const existing = sectionMap.get(primaryIndustry.slug);
+      if (existing) {
+        existing.careers.push(career);
+        continue;
+      }
+
+      sectionMap.set(primaryIndustry.slug, {
+        industry: {
+          slug: primaryIndustry.slug,
+          name: primaryIndustry.name,
+          description: null,
+        },
+        careers: [career],
+      });
+    }
+
+    if (sectionMap.size === 0) return [];
+
+    const industries = await db.industry.findMany({
+      where: { slug: { in: [...sectionMap.keys()] } },
+      select: { slug: true, name: true, description: true },
+    });
+
+    for (const industry of industries) {
+      const section = sectionMap.get(industry.slug);
+      if (section) {
+        section.industry.description = industry.description;
+      }
+    }
+
+    return [...sectionMap.values()].sort((a, b) =>
+      a.industry.name.localeCompare(b.industry.name),
+    );
+  },
+
+  /** Random published titles for the home hero physics tumbling treatment. */
+  async findTumblingTitles(limit = 55): Promise<Array<{ slug: string; title: string }>> {
+    const all = await db.career.findMany({
+      where: { status: CareerStatus.PUBLISHED },
+      select: { slug: true, title: true },
+    });
+
+    if (all.length <= limit) return all;
+
+    const picked = [...all];
+    for (let i = picked.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [picked[i], picked[j]] = [picked[j]!, picked[i]!];
+    }
+
+    return picked.slice(0, limit);
   },
 
   async findBySlugs(slugs: string[]): Promise<CareerListItem[]> {

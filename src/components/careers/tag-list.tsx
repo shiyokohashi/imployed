@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 
 type TagListProps = {
   items: string[];
-  variant?: "default" | "secondary" | "outline";
+  variant?: "default" | "secondary" | "outline" | "ghost";
   limit?: number;
 };
 
@@ -20,7 +20,7 @@ export function TagList({ items, variant = "secondary", limit }: TagListProps) {
         </Badge>
       ))}
       {remaining > 0 && (
-        <Badge variant="outline">+{remaining} more</Badge>
+        <Badge variant="ghost">+{remaining} more</Badge>
       )}
     </div>
   );

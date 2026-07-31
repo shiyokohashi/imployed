@@ -26,7 +26,7 @@ export default async function CareerPage({ params }: CareerPageProps) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-5xl flex-1 px-4 py-12 sm:px-6">
+      <main className="mx-auto max-w-5xl flex-1 px-8 py-14 sm:px-12">
         <Link
           href="/careers"
           className="mb-8 inline-block text-sm text-muted-foreground hover:text-foreground"
