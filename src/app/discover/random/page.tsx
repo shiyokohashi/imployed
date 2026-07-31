@@ -4,7 +4,6 @@ import { CareerGrid } from "@/components/careers/career-grid";
 import { DatabaseUnavailable } from "@/components/careers/database-unavailable";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { Button } from "@/components/ui/button";
 import { isDbConnectionError } from "@/lib/db-retry";
 import { discoveryService } from "@/lib/services/discovery.service";
 import type { CareerListItem } from "@/lib/types/career";
@@ -41,7 +40,12 @@ export default async function DiscoverRandomPage() {
             </p>
           </div>
           {!dbUnavailable && (
-            <Button render={<Link href="/discover/random" />}>Shuffle again</Button>
+            <Link
+              href="/discover/random"
+              className="type-nav shrink-0 transition-opacity hover:opacity-70"
+            >
+              Shuffle again
+            </Link>
           )}
         </div>
         {dbUnavailable ? (
