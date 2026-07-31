@@ -14,6 +14,9 @@ function createPool() {
     max: 10,
     connectionTimeoutMillis: 10_000,
     idleTimeoutMillis: 30_000,
+    ssl: connectionString.includes("supabase.com")
+      ? { rejectUnauthorized: false }
+      : undefined,
   });
 }
 

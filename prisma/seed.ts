@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { createPrismaClient } from "../src/lib/db";
+import { db as prisma } from "../src/lib/db";
 import { CAREER_CATALOG, CAREER_SEEDS } from "./careers-data";
 import {
   PERSONALIZATION_INTERESTS,
@@ -12,8 +12,6 @@ import {
   CareerStatus,
   SkillPickerGroup,
 } from "../src/generated/prisma/client";
-
-const prisma = createPrismaClient();
 
 const INDUSTRIES = [
   { slug: "tech", name: "Tech" },
