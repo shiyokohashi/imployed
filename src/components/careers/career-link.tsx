@@ -11,8 +11,6 @@ export function CareerLink({ slug, className, children, ...props }: CareerLinkPr
   return (
     <Link
       href={`/careers/${slug}`}
-      target="_blank"
-      rel="noopener noreferrer"
       className={cn(className)}
       {...props}
     >

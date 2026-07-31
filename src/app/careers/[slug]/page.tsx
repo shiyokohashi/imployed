@@ -14,13 +14,26 @@ type CareerPageProps = {
 
 export default async function CareerPage({ params }: CareerPageProps) {
   const { slug } = await params;
-  const [career, similarCareers] = await Promise.all([
-    careerRepository.findBySlug(slug),
-    careerRepository.findSimilarBySlug(slug, 6),
-  ]);
+  const decodedSlug = decodeURIComponent(slug);
+
+  let career = null;
+  let similarCareers: Awaited<ReturnType<typeof careerRepository.findSimilarBySlug>> = [];
+
+  try {
+    career = await careerRepository.findBySlug(decodedSlug);
+  } catch (error) {
+    console.error("Failed to load career:", decodedSlug, error);
+    throw error;
+  }
 
   if (!career) {
     notFound();
+  }
+
+  try {
+    similarCareers = await careerRepository.findSimilarBySlug(decodedSlug, 6);
+  } catch (error) {
+    console.error("Failed to load similar careers:", decodedSlug, error);
   }
 
   return (
@@ -42,14 +55,20 @@ export default async function CareerPage({ params }: CareerPageProps) {
 
 export async function generateMetadata({ params }: CareerPageProps) {
   const { slug } = await params;
-  const career = await careerRepository.findBySlug(slug);
+  const decodedSlug = decodeURIComponent(slug);
 
-  if (!career) {
-    return { title: "Career not found | Imployed" };
+  try {
+    const career = await careerRepository.findBySlug(decodedSlug);
+
+    if (!career) {
+      return { title: "Career not found | Imployed" };
+    }
+
+    return {
+      title: `${career.title} | Imployed`,
+      description: career.tagline ?? career.summary,
+    };
+  } catch {
+    return { title: "Career | Imployed" };
   }
-
-  return {
-    title: `${career.title} | Imployed`,
-    description: career.tagline ?? career.summary,
-  };
 }

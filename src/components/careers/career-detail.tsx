@@ -112,7 +112,7 @@ export function CareerDetailView({
       </section>
 
       {similarCareers.length > 0 && (
-        <section className="space-y-5">
+        <section className="space-y-5 pt-12">
           <div className="space-y-2">
             <h2 className="type-subhead">Similar careers</h2>
             <p className="type-body">

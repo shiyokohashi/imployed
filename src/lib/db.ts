@@ -1,45 +1,50 @@
+import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
-function createPrismaClient() {
+function createPool() {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error("DATABASE_URL environment variable is not set.");
   }
 
-  const adapter = new PrismaPg({ connectionString });
+  return new Pool({
+    connectionString,
+    max: 10,
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 30_000,
+  });
+}
+
+function createPrismaClient(pool: Pool) {
+  const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  pool: Pool | undefined;
 };
 
+function getPool(): Pool {
+  if (!globalForPrisma.pool) {
+    const pool = createPool();
+    pool.on("error", (error) => {
+      console.error("Postgres pool error:", error);
+    });
+    globalForPrisma.pool = pool;
+  }
+  return globalForPrisma.pool;
+}
+
 function getPrismaClient(): PrismaClient {
-  const cached = globalForPrisma.prisma;
-
-  // Recreate client after schema changes (e.g. new models) during dev
-  if (cached && "activity" in cached) {
-    return cached;
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient(getPool());
   }
-
-  const client = createPrismaClient();
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-  }
-
-  return client;
+  return globalForPrisma.prisma;
 }
 
-export const db =
-  process.env.NODE_ENV === "production"
-    ? (globalForPrisma.prisma ?? createPrismaClient())
-    : getPrismaClient();
-
-if (process.env.NODE_ENV === "production" && !globalForPrisma.prisma) {
-  globalForPrisma.prisma = db;
-}
+export const db = getPrismaClient();
 
 export { createPrismaClient };

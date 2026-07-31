@@ -1,15 +1,30 @@
 import Link from "next/link";
 
 import { CareerGrid } from "@/components/careers/career-grid";
+import { DatabaseUnavailable } from "@/components/careers/database-unavailable";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Button } from "@/components/ui/button";
+import { isDbConnectionError } from "@/lib/db-retry";
 import { discoveryService } from "@/lib/services/discovery.service";
+import type { CareerListItem } from "@/lib/types/career";
 
 export const dynamic = "force-dynamic";
 
 export default async function DiscoverRandomPage() {
-  const careers = await discoveryService.getRandom(6);
+  let careers: CareerListItem[] = [];
+  let dbUnavailable = false;
+
+  try {
+    careers = await discoveryService.getRandom(6);
+  } catch (error) {
+    console.error("Discover random: failed to load careers", error);
+    if (isDbConnectionError(error)) {
+      dbUnavailable = true;
+    } else {
+      throw error;
+    }
+  }
 
   return (
     <>
@@ -25,9 +40,15 @@ export default async function DiscoverRandomPage() {
               Six careers picked at random — refresh for a new set.
             </p>
           </div>
-          <Button render={<Link href="/discover/random" />}>Shuffle again</Button>
+          {!dbUnavailable && (
+            <Button render={<Link href="/discover/random" />}>Shuffle again</Button>
+          )}
         </div>
-        <CareerGrid careers={careers} />
+        {dbUnavailable ? (
+          <DatabaseUnavailable backHref="/discover" backLabel="Back to discover" />
+        ) : (
+          <CareerGrid careers={careers} />
+        )}
       </main>
       <SiteFooter />
     </>

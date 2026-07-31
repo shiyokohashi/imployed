@@ -14,14 +14,8 @@ export function CareerCard({ career, layout = "list" }: CareerCardProps) {
   const industryNames = career.industries.map((i) => i.industry.name);
   const skillNames = career.skills.map((s) => s.skill.name);
 
-  const content = (
-    <CareerLink
-      slug={career.slug}
-      className={cn(
-        "group block h-full transition-opacity hover:opacity-70",
-        layout === "grid" && "flex min-h-full flex-col"
-      )}
-    >
+  const body = (
+    <>
       <div
         className={cn(
           layout === "list" && "flex items-start justify-between gap-4",
@@ -32,7 +26,7 @@ export function CareerCard({ career, layout = "list" }: CareerCardProps) {
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h3 className="type-career-title">{career.title}</h3>
             {career.featured && layout === "list" && (
-                <span className="type-label">Featured</span>
+              <span className="type-label">Featured</span>
             )}
           </div>
           {career.tagline && (
@@ -81,14 +75,28 @@ export function CareerCard({ career, layout = "list" }: CareerCardProps) {
           )}
         </div>
       )}
-    </CareerLink>
+    </>
   );
 
   if (layout === "grid") {
     return (
-      <div className="border-r border-b border-foreground/12 p-5 sm:p-6">{content}</div>
+      <CareerLink
+        slug={career.slug}
+        className="group flex min-h-full flex-col border-r border-b border-foreground/12 p-5 transition-opacity hover:opacity-70 sm:p-6"
+      >
+        {body}
+      </CareerLink>
     );
   }
 
-  return <LineItem>{content}</LineItem>;
+  return (
+    <LineItem>
+      <CareerLink
+        slug={career.slug}
+        className="group block transition-opacity hover:opacity-70"
+      >
+        {body}
+      </CareerLink>
+    </LineItem>
+  );
 }

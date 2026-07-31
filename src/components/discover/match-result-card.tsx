@@ -13,17 +13,25 @@ type MatchResultCardProps = {
 export function MatchResultCard({ result, rank, layout = "list" }: MatchResultCardProps) {
   const { career, matchReasons, skillsYouHave, skillsToBuild } = result;
 
-  const content = (
+  const title = (
+    <h3 className="type-career-title-lg">{career.title}</h3>
+  );
+
+  const body = (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 space-y-2">
           <p className="type-label">Match #{rank}</p>
-          <CareerLink
-            slug={career.slug}
-            className="type-career-title-lg block transition-opacity hover:opacity-70"
-          >
-            {career.title}
-          </CareerLink>
+          {layout === "list" ? (
+            <CareerLink
+              slug={career.slug}
+              className="type-career-title-lg block transition-opacity hover:opacity-70"
+            >
+              {career.title}
+            </CareerLink>
+          ) : (
+            title
+          )}
           {career.tagline && <p className="type-body-lg">{career.tagline}</p>}
         </div>
         <p className="type-meta shrink-0 pt-5 tabular-nums">{result.matchScore} pts</p>
@@ -96,22 +104,29 @@ export function MatchResultCard({ result, rank, layout = "list" }: MatchResultCa
         </section>
       )}
 
-      <div>
-        <CareerLink
-          slug={career.slug}
-          className="type-nav text-foreground transition-opacity hover:opacity-70"
-        >
-          Explore this career →
-        </CareerLink>
-      </div>
+      {layout === "list" && (
+        <div>
+          <CareerLink
+            slug={career.slug}
+            className="type-nav text-foreground transition-opacity hover:opacity-70"
+          >
+            Explore this career →
+          </CareerLink>
+        </div>
+      )}
     </div>
   );
 
   if (layout === "grid") {
     return (
-      <div className="border-r border-b border-foreground/12 p-5 sm:p-6">{content}</div>
+      <CareerLink
+        slug={career.slug}
+        className="block border-r border-b border-foreground/12 p-5 transition-opacity hover:opacity-70 sm:p-6"
+      >
+        {body}
+      </CareerLink>
     );
   }
 
-  return <LineItem className="space-y-6">{content}</LineItem>;
+  return <LineItem className="space-y-6">{body}</LineItem>;
 }

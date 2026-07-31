@@ -2,6 +2,7 @@ import { CareerStatus, GrowthOutlook } from "@/generated/prisma/client";
 import { CAREERS_PER_PAGE } from "@/lib/constants/discovery";
 import { formatSalaryCompact } from "@/lib/constants/salary-preference";
 import { db } from "@/lib/db";
+import { withDbRetry } from "@/lib/db-retry";
 import type { DiscoveryFilters, DiscoveryResponse, DiscoveryResult } from "@/lib/types/discovery";
 
 type SignalMatch = { slug: string; label: string; kind: string };
@@ -12,7 +13,8 @@ type SignalMatch = { slug: string; label: string; kind: string };
  */
 export const discoveryService = {
   async discover(filters: DiscoveryFilters): Promise<DiscoveryResponse> {
-    const careers = await db.career.findMany({
+    return withDbRetry(async () => {
+      const careers = await db.career.findMany({
       where: { status: CareerStatus.PUBLISHED },
       include: {
         skills: { include: { skill: true }, orderBy: { importance: "desc" } },
@@ -132,11 +134,13 @@ export const discoveryService = {
       signalLabels,
       headline: buildHeadline(signalLabels, hasSignals, filters.salaryMin),
     };
+    });
   },
 
   async getEmerging(options: { limit?: number; offset?: number } = {}) {
     const { limit = CAREERS_PER_PAGE, offset = 0 } = options;
-    return db.career.findMany({
+    return withDbRetry(() =>
+      db.career.findMany({
       where: {
         status: CareerStatus.PUBLISHED,
         growthOutlook: { in: [GrowthOutlook.HIGH_GROWTH, GrowthOutlook.GROWING] },
@@ -168,20 +172,24 @@ export const discoveryService = {
           take: 5,
         },
       },
-    });
+    }),
+    );
   },
 
   async countEmerging() {
-    return db.career.count({
-      where: {
-        status: CareerStatus.PUBLISHED,
-        growthOutlook: { in: [GrowthOutlook.HIGH_GROWTH, GrowthOutlook.GROWING] },
-      },
-    });
+    return withDbRetry(() =>
+      db.career.count({
+        where: {
+          status: CareerStatus.PUBLISHED,
+          growthOutlook: { in: [GrowthOutlook.HIGH_GROWTH, GrowthOutlook.GROWING] },
+        },
+      }),
+    );
   },
 
   async getRandom(limit = 6) {
-    const careers = await db.career.findMany({
+    const careers = await withDbRetry(() =>
+      db.career.findMany({
       where: { status: CareerStatus.PUBLISHED },
       select: {
         id: true,
@@ -207,7 +215,8 @@ export const discoveryService = {
           take: 5,
         },
       },
-    });
+    }),
+    );
 
     return shuffle(careers).slice(0, limit);
   },

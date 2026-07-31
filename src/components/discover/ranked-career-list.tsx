@@ -77,14 +77,8 @@ function MatchResultRow({
 }) {
   const { career, matchScore, matchReasons } = result;
 
-  const content = (
-    <CareerLink
-      slug={career.slug}
-      className={cn(
-        "block h-full transition-opacity hover:opacity-70",
-        layout === "grid" && "flex min-h-full flex-col gap-3"
-      )}
-    >
+  const body = (
+    <>
       <div className="flex items-baseline justify-between gap-3">
         <p className="type-career-title">{career.title}</p>
         <span className="type-meta shrink-0 tabular-nums">#{rank}</span>
@@ -118,12 +112,17 @@ function MatchResultRow({
           <span className="type-meta shrink-0 tabular-nums">{matchScore} pts</span>
         )}
       </div>
-    </CareerLink>
+    </>
   );
 
   if (layout === "grid") {
     return (
-      <div className="border-r border-b border-foreground/12 p-5 sm:p-6">{content}</div>
+      <CareerLink
+        slug={career.slug}
+        className="flex min-h-full flex-col gap-3 border-r border-b border-foreground/12 p-5 transition-opacity hover:opacity-70 sm:p-6"
+      >
+        {body}
+      </CareerLink>
     );
   }
 

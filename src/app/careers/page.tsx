@@ -1,9 +1,11 @@
 import { CareerGrid } from "@/components/careers/career-grid";
+import { DatabaseUnavailable } from "@/components/careers/database-unavailable";
 import { PageHeader } from "@/components/layout/page-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { ListPagination } from "@/components/ui/list-pagination";
 import { CAREERS_PER_PAGE } from "@/lib/constants/discovery";
+import { isDbConnectionError } from "@/lib/db-retry";
 import {
   getPaginationMeta,
   paginateOffset,
@@ -22,18 +24,31 @@ export default async function CareersPage({ searchParams }: CareersPageProps) {
   const page = parsePage(params.page);
   const offset = paginateOffset(page, CAREERS_PER_PAGE);
 
-  const [careers, total] = await Promise.all([
-    careerRepository.findPublished({
-      query: params.q,
-      industry: params.industry,
-      limit: CAREERS_PER_PAGE,
-      offset,
-    }),
-    careerRepository.countPublished({
-      query: params.q,
-      industry: params.industry,
-    }),
-  ]);
+  let careers: Awaited<ReturnType<typeof careerRepository.findPublished>> = [];
+  let total = 0;
+  let dbUnavailable = false;
+
+  try {
+    [careers, total] = await Promise.all([
+      careerRepository.findPublished({
+        query: params.q,
+        industry: params.industry,
+        limit: CAREERS_PER_PAGE,
+        offset,
+      }),
+      careerRepository.countPublished({
+        query: params.q,
+        industry: params.industry,
+      }),
+    ]);
+  } catch (error) {
+    console.error("Careers page: failed to load careers", error);
+    if (isDbConnectionError(error)) {
+      dbUnavailable = true;
+    } else {
+      throw error;
+    }
+  }
 
   const pagination = getPaginationMeta(total, page, CAREERS_PER_PAGE);
 
@@ -47,14 +62,18 @@ export default async function CareersPage({ searchParams }: CareersPageProps) {
           className="mb-8 max-w-2xl"
         />
 
-        <div className="space-y-10">
-          <CareerGrid careers={careers} />
-          <ListPagination
-            meta={pagination}
-            pathname="/careers"
-            searchParams={params}
-          />
-        </div>
+        {dbUnavailable ? (
+          <DatabaseUnavailable />
+        ) : (
+          <div className="space-y-10">
+            <CareerGrid careers={careers} />
+            <ListPagination
+              meta={pagination}
+              pathname="/careers"
+              searchParams={params}
+            />
+          </div>
+        )}
       </main>
       <SiteFooter />
     </>

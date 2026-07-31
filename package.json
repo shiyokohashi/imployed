@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run dev:all",
+    "dev:next": "next dev",
     "dev:db": "prisma dev start default",
+    "dev:all": "sh -c 'npx prisma dev start default & sleep 5 && npm run dev:next'",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

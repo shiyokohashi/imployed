@@ -1,15 +1,30 @@
 import Link from "next/link";
 
+import { DatabaseUnavailable } from "@/components/careers/database-unavailable";
 import { PageHeader } from "@/components/layout/page-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { LineItem, LineList } from "@/components/ui/line-list";
+import { isDbConnectionError } from "@/lib/db-retry";
 import { taxonomyRepository } from "@/lib/repositories/taxonomy.repository";
+import type { TaxonomyItem } from "@/lib/types/career";
 
 export const dynamic = "force-dynamic";
 
 export default async function DiscoverIndustriesPage() {
-  const industries = await taxonomyRepository.getIndustries();
+  let industries: TaxonomyItem[] = [];
+  let dbUnavailable = false;
+
+  try {
+    industries = await taxonomyRepository.getIndustries();
+  } catch (error) {
+    console.error("Discover industries: failed to load", error);
+    if (isDbConnectionError(error)) {
+      dbUnavailable = true;
+    } else {
+      throw error;
+    }
+  }
 
   return (
     <>
@@ -23,21 +38,25 @@ export default async function DiscoverIndustriesPage() {
           lead="Pick an industry to explore careers — no personalization required."
           className="mb-8 mt-4 max-w-2xl"
         />
-        <LineList>
-          {industries.map((industry) => (
-            <LineItem key={industry.slug}>
-              <Link
-                href={`/careers?industry=${industry.slug}`}
-                className="block transition-opacity hover:opacity-70"
-              >
-                <p className="type-career-title">{industry.name}</p>
-                {industry.description && (
-                  <p className="type-body mt-1.5">{industry.description}</p>
-                )}
-              </Link>
-            </LineItem>
-          ))}
-        </LineList>
+        {dbUnavailable ? (
+          <DatabaseUnavailable backHref="/discover" backLabel="Back to discover" />
+        ) : (
+          <LineList>
+            {industries.map((industry) => (
+              <LineItem key={industry.slug}>
+                <Link
+                  href={`/careers?industry=${industry.slug}`}
+                  className="block transition-opacity hover:opacity-70"
+                >
+                  <p className="type-career-title">{industry.name}</p>
+                  {industry.description && (
+                    <p className="type-body mt-1.5">{industry.description}</p>
+                  )}
+                </Link>
+              </LineItem>
+            ))}
+          </LineList>
+        )}
       </main>
       <SiteFooter />
     </>
