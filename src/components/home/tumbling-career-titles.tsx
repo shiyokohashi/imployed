@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 type TumblingCareerTitlesProps = {
   titles: Array<{ slug: string; title: string }>;
+  onMotionChange?: (motion: { isMoving: boolean; motionLevel: number }) => void;
 };
 
 type TitleBody = {
@@ -159,7 +160,7 @@ function staticLayout(count: number) {
   }));
 }
 
-export function TumblingCareerTitles({ titles }: TumblingCareerTitlesProps) {
+export function TumblingCareerTitles({ titles, onMotionChange }: TumblingCareerTitlesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const titlesRef = useRef(titles);
   const rafRef = useRef<number | null>(null);
@@ -169,8 +170,13 @@ export function TumblingCareerTitles({ titles }: TumblingCareerTitlesProps) {
     destroy: () => void;
   } | null>(null);
   const clickInteractionRef = useRef({ moved: false, startX: 0, startY: 0, slug: null as string | null });
+  const onMotionChangeRef = useRef(onMotionChange);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const staticPositions = useMemo(() => staticLayout(titles.length), [titles.length]);
+
+  useEffect(() => {
+    onMotionChangeRef.current = onMotionChange;
+  }, [onMotionChange]);
 
   useEffect(() => {
     setPrefersReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -449,6 +455,40 @@ export function TumblingCareerTitles({ titles }: TumblingCareerTitlesProps) {
 
     let lastTick = performance.now();
 
+    let lastMotionReport = 0;
+
+    function reportMotion(isDragging: boolean) {
+      if (!onMotionChangeRef.current) return;
+
+      let totalMotion = 0;
+      let movingCount = 0;
+
+      for (const item of titleBodies) {
+        if (!item.spawned) continue;
+
+        const speed = Math.hypot(item.body.velocity.x, item.body.velocity.y);
+        const spin = Math.abs(item.body.angularVelocity);
+        const motion = speed + spin * 18;
+
+        totalMotion += motion;
+        if (motion > 0.12) movingCount += 1;
+      }
+
+      const spawnedCount = titleBodies.filter((item) => item.spawned).length;
+      const motionLevel =
+        spawnedCount === 0
+          ? 0
+          : Math.min(1, totalMotion / Math.max(spawnedCount * 1.1, 1));
+
+      const isMoving =
+        isDragging ||
+        !spawnComplete ||
+        movingCount > 0 ||
+        (spawnedCount > 0 && motionLevel > 0.08);
+
+      onMotionChangeRef.current({ isMoving, motionLevel });
+    }
+
     const tick = (now: number) => {
       if (destroyed || paused) return;
 
@@ -468,6 +508,11 @@ export function TumblingCareerTitles({ titles }: TumblingCareerTitlesProps) {
         Matter.Engine.update(engine, delta);
         if (!spawnComplete) {
           processSpawnQueue(now - spawnStart);
+        }
+
+        if (now - lastMotionReport > 80) {
+          lastMotionReport = now;
+          reportMotion(Boolean(mouseConstraint.body));
         }
       }
 

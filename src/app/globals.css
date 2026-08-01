@@ -508,4 +508,20 @@
     object-fit: contain;
     filter: drop-shadow(0 1px 0 rgb(239 100 40 / 0.15));
   }
+
+  /* Black-bg Firefly clip: screen blend removes black on warm paper */
+  .hero-mascot-video-wrap {
+    isolation: isolate;
+    margin-inline: -0.07em;
+    vertical-align: -0.2em;
+  }
+
+  .hero-mascot-video {
+    display: block;
+    height: 0.98em;
+    width: auto;
+    object-fit: contain;
+    mix-blend-mode: screen;
+    filter: drop-shadow(0 1px 0 rgb(239 100 40 / 0.15));
+  }
 }
